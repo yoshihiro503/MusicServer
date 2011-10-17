@@ -1,4 +1,4 @@
-package org.proofcafe.android.socketserver
+package org.proofcafe.musicserver.player
 
 import scala.io.Source
 import android.content.Context

@@ -1,4 +1,4 @@
-package org.proofcafe.android.socketserver
+package org.proofcafe.musicserver.player
 
 import java.io.File
 import android.net.Uri

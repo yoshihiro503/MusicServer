@@ -1,4 +1,4 @@
-package org.proofcafe.android.socketserver
+package org.proofcafe.musicserver.player
 
 import android.app.Activity
 import android.os.Bundle
