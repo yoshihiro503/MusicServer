@@ -4,10 +4,10 @@ import scala.io.Source
 import android.content.Context
 import android.util.Log
 
-object Interpreter {
+class Interpreter(main : Context) {
   val TAG = "Interpreter"
 
-  def lineInterpreter(main : Context, lines : Seq[String]): Seq[String] = {
+  def lineInterpreter(lines : Iterator[String]): Iterator[String] = {
     val player = Player.create(main)
     lines takeWhile {
       line => line != "exit"
@@ -15,15 +15,19 @@ object Interpreter {
       line => line != ""
     } map {
       line =>
-	if (line == "play") {
-	  player.play("TODO_filename")
-	  "PLAY"
-	} else if (line == "stop") {
-	  player.stop()
-	  "STOP"
-	} else {
-	  "unknown command: "+line
-	}
+        if (line == "play") {
+          player.play("TODO_filename")
+          "PLAY"
+        } else if (line == "stop") {
+          player.stop()
+          "STOP"
+        } else {
+          "unknown command: "+line
+        }
     }
   }
+}
+
+object Interpreter {
+  def apply(main : Context) = new Interpreter(main)
 }

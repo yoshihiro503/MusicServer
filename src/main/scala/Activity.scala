@@ -4,6 +4,8 @@ import android.app.Activity
 import android.os.Bundle
 import android.widget.TextView
 import android.widget.LinearLayout
+import android.widget.Button
+import android.view.View
 import android.util.Log
 import java.io.PrintWriter
 import scala.io.Source
@@ -15,8 +17,20 @@ class MainActivity extends Activity {
 
   override def onCreate(savedInstanceState: Bundle) {
     super.onCreate(savedInstanceState)
-    setContentView(new TextView(this) {
-      setText("address = ["+getAddress.mkString(",")+"], port = "+port)
+    val self = this
+    setContentView(new LinearLayout(self) {
+      setOrientation(LinearLayout.VERTICAL)
+      addView(new TextView(self) {
+        setText("address = ["+getAddress.mkString(",")+"], port = "+port)
+      })
+      addView(new Button(self) {
+        setText("EXIT")
+        setOnClickListener(new View.OnClickListener() {
+          override def onClick(v : View) = {
+            System.exit(Activity.RESULT_OK)
+          }
+        })
+      })
     })
 
     forever(server)
@@ -26,35 +40,41 @@ class MainActivity extends Activity {
     import scala.actors.Actor._
     actor (loop(f())) start
   }
-  
 
-  def getLines[T](in : java.io.InputStream) : Stream[String] = {
+  def getLines(in : java.io.InputStream) : Iterator[String] = {
     import java.io._
     val reader = new BufferedReader(new InputStreamReader(in))
-    Stream.continually(reader.readLine()).takeWhile(_ != null)
+    Iterator.continually(reader.readLine()).takeWhile(_ != null)
   }
 
   def server() = {
     import java.net.ServerSocket
-
-    val server = new ServerSocket(port) {
-      setSoTimeout(0)
-    }
-    val socket = server.accept()
-    val in  = socket.getInputStream()
-    val out = new PrintWriter(socket.getOutputStream())
-    try {
-      Interpreter.lineInterpreter(this, getLines(in)).foreach {
-      	res =>
-	  out.println(res)
-	  out.flush()
+    import java.net.Socket
+    import java.io._
+    def using[T](op : (InputStream,OutputStream) => T) : T = {
+      val server = new ServerSocket(port) {
+        setSoTimeout(0)
       }
-    } catch {
-      case e => e.printStackTrace()
+      val socket = server.accept()
+      val in =  socket.getInputStream()
+      val out = socket.getOutputStream()
+      def close() = { server.close(); in.close(); out.close() }
+      try {
+        val y = op(in, out)
+        close(); y
+      } catch {
+        case (e: Exception) => { close(); throw e }
+      }
     }
-    server.close
-    in.close()
-    out.close()
+    using {
+      case(in, out) =>
+        val writer = new PrintWriter(out)
+        Interpreter(this).lineInterpreter(getLines(in)).foreach {
+      	  res =>
+	    writer.println(res)
+	    writer.flush()
+        }
+    }
   }
 
   def getAddress() : Iterator[java.net.InetAddress] = {

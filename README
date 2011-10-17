@@ -1,0 +1,14 @@
+RUN EMULATOR
+============
+
+ $ sbt android:start-emulator
+ $ adb forward tcp:8080 tcp:8080
+ $ nc localhost 8080
+foo
+unknown command: foo
+play
+PLAY
+stop
+STOP
+exit
+ $
